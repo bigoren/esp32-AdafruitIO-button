@@ -46,8 +46,12 @@ AdafruitIO_WiFi io(IO_USERNAME, IO_KEY, WIFI_SSID, WIFI_PASS);
 // #include "AdafruitIO_Ethernet.h"
 // AdafruitIO_Ethernet io(IO_USERNAME, IO_KEY);
 
+// device related configurations
+#define THING_NAME      "ada_button"
+#define BUTTON_IO       2  // select GPIO for button
+
+// Time related configurations
 #define TZ_HOUR_SHIFT   3  // number of hours to shift due to Time Zone
 #define RESET_HOUR      12 // hour of day (0-23) to reset the button presses count
 #define DEBOUNCE_SECS   60 // minimum number of seconds between presses
 #define MONITOR_SECS    10 // interval between monitoring messages, watch out for Adafruit IO rate limit 30 topics per minute
-#define BUTTON_IO       2  // select GPIO for button

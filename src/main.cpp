@@ -19,6 +19,7 @@
 
 /************************ Example Starts Here *******************************/
 #include <TimeLib.h>
+#include <ArduinoOTA.h>
 
 byte buttonRead;
 int buttonPresses = 0;
@@ -150,10 +151,54 @@ void setup() {
   setSyncProvider(timeSync);
   setSyncInterval(60); // sync interval in seconds, consider increasing
   
+  //// Over The Air section ////
+  // Port defaults to 3232
+  // ArduinoOTA.setPort(3232);
+
+  // Hostname defaults to esp3232-[MAC]
+  ArduinoOTA.setHostname(THING_NAME);
+
+  // No authentication by default
+  // ArduinoOTA.setPassword("admin");
+
+  // Password can be set with it's md5 value as well
+  // MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
+  // ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
+
+  ArduinoOTA
+    .onStart([]() {
+      String type;
+      if (ArduinoOTA.getCommand() == U_FLASH)
+        type = "sketch";
+      else // U_SPIFFS
+        type = "filesystem";
+
+      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+      Serial.println("Start updating " + type);
+    })
+    .onEnd([]() {
+      Serial.println("\nEnd");
+    })
+    .onProgress([](unsigned int progress, unsigned int total) {
+      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    })
+    .onError([](ota_error_t error) {
+      Serial.printf("Error[%u]: ", error);
+      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+      else if (error == OTA_END_ERROR) Serial.println("End Failed");
+    });
+
+  ArduinoOTA.begin();
+
 }
 
 void loop() {
   unsigned int currTime = millis();
+
+  ArduinoOTA.handle();
 
   // io.run(); is required for all sketches.
   // it should always be present at the top of your loop
@@ -165,7 +210,7 @@ void loop() {
   if (timeStatus() == timeNotSet) {
     if (secTime > 0) {
       setTime(timeSync());
-      Serial.print("Time set, time is now -> ");
+      Serial.print("Time set, time is now <- ");
       digitalClockDisplay();
     }
     else {
@@ -175,16 +220,16 @@ void loop() {
   
   if (currTime - lastMonitorTime >= (MONITOR_SECS * 1000)) {
     // save count to the 'counter' feed on Adafruit IO
-    Serial.print("sending count value -> ");
+    Serial.print("sending count and rssi value -> ");
     Serial.println(count);
     counter->save(count);
     // save the wifi signal strength (RSSI) to the 'rssi' feed on Adafruit IO
     rssi->save(WiFi.RSSI());
     
-    Serial.print("Time is -> ");
+    Serial.print("Time is: ");
     digitalClockDisplay();
 
-    Serial.print("Button pressed # -> ");
+    Serial.print("Button pressed # ");
     Serial.println(buttonPresses);
 
     // increment the count by 1
@@ -192,12 +237,12 @@ void loop() {
     lastMonitorTime = currTime;
   }
   
-  if(currTime - lastReportTime >= (DEBOUNCE_SECS * 1000)) {
+  if(((currTime - lastReportTime) >= (DEBOUNCE_SECS * 1000)) || (currTime < (DEBOUNCE_SECS * 1000))) {
     // make debounce for button reads and reports
     buttonRead = digitalRead(BUTTON_IO);
     if (buttonRead) {
       buttonPresses++;
-      Serial.print("button pressed! # is now -> ");
+      Serial.print("sending button pressed! # is now -> ");
       Serial.println(buttonPresses);
       digitalClockDisplay();
       reportButton->save(buttonPresses);
@@ -207,13 +252,13 @@ void loop() {
 
   // reset the buttonPresses and count at some hour of the day
   if ((hour() == RESET_HOUR) && (minute() == 0) && (second() == 0) && (!resetFlag)) {
-    Serial.print("count and presses reset at time -> ");
+    Serial.print("sending count and presses reset at time -> ");
     digitalClockDisplay();
     buttonPresses = 0;
     reportButton->save(buttonPresses);
     count = 0;
     counter->save(count);
-    // remember we just reset so we don't do it again and bombard Adafruit IO with requests
+    // remember a reset happened so we don't do it again and bombard Adafruit IO with requests
     resetFlag = true;
   }
 
