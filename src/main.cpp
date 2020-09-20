@@ -43,7 +43,7 @@ time_t secTime = 0;
 int count = 0;
 
 // set up the 'counter' feed
-AdafruitIO_Feed *counter = io.feed("counter");
+// AdafruitIO_Feed *counter = io.feed("counter");
 AdafruitIO_Feed *rssi = io.feed("rssi");
 AdafruitIO_Feed *reportButton = io.feed("button");
 
@@ -220,9 +220,9 @@ void loop() {
   
   if (currTime - lastMonitorTime >= (MONITOR_SECS * 1000)) {
     // save count to the 'counter' feed on Adafruit IO
-    Serial.print("sending count and rssi value -> ");
-    Serial.println(count);
-    counter->save(count);
+    Serial.print("sending rssi value -> ");
+    // Serial.println(count);
+    // counter->save(count);
     // save the wifi signal strength (RSSI) to the 'rssi' feed on Adafruit IO
     rssi->save(WiFi.RSSI());
     
@@ -242,6 +242,9 @@ void loop() {
     buttonRead = digitalRead(BUTTON_IO);
     if (buttonRead) {
       buttonPresses++;
+      if (buttonPresses > 10) {
+        buttonPresses = 0;
+      }
       Serial.print("sending button pressed! # is now -> ");
       Serial.println(buttonPresses);
       digitalClockDisplay();
@@ -252,12 +255,12 @@ void loop() {
 
   // reset the buttonPresses and count at some hour of the day
   if ((hour() == RESET_HOUR) && (minute() == 0) && (second() == 0) && (!resetFlag)) {
-    Serial.print("sending count and presses reset at time -> ");
+    Serial.print("resetting button presses reset at time -> ");
     digitalClockDisplay();
     buttonPresses = 0;
     reportButton->save(buttonPresses);
     count = 0;
-    counter->save(count);
+    // counter->save(count);
     // remember a reset happened so we don't do it again and bombard Adafruit IO with requests
     resetFlag = true;
   }
