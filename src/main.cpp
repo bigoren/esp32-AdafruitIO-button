@@ -22,11 +22,13 @@
 #include <ArduinoOTA.h>
 
 byte buttonRead;
+int currButtonPresses = 0;
 int buttonPresses = 0;
 bool resetFlag = false;
 
-unsigned int lastReportTime = 0;
 unsigned int lastMonitorTime = 0;
+unsigned int lastReportTime = 0;
+unsigned int firstReportTime = 0;
 
 // set up the 'time/seconds' topic
 AdafruitIO_Time *seconds = io.time(AIO_TIME_SECONDS);
@@ -237,20 +239,32 @@ void loop() {
     lastMonitorTime = currTime;
   }
   
-  if(((currTime - lastReportTime) >= (DEBOUNCE_SECS * 1000)) || (currTime < (DEBOUNCE_SECS * 1000))) {
+  // Debounce button presses, so we don't count presses more than once and not flood AdafruitIO more than 30 messages per minute
+  if((((currTime - lastReportTime) >= (DEBOUNCE_SECS * 1000)) || (currTime < (DEBOUNCE_SECS * 1000))) && (currButtonPresses < 25)) {
     // make debounce for button reads and reports
     buttonRead = digitalRead(BUTTON_IO);
     if (buttonRead) {
+      currButtonPresses++;
       buttonPresses++;
       if (buttonPresses > 10) {
         buttonPresses = 0;
       }
       Serial.print("sending button pressed! # is now -> ");
       Serial.println(buttonPresses);
+      Serial.print("curren button presses is -> ");
+      Serial.println(currButtonPresses);
       digitalClockDisplay();
       reportButton->save(buttonPresses);
       lastReportTime = currTime;
+      if (currButtonPresses == 0) {
+        firstReportTime = currTime;
+      }
     }
+  }
+
+  // reset currButtonPresses every minute, to keep reporting messages to AdafruitIO under 30 per minute
+  if((currTime - firstReportTime) >= 60000) {
+    currButtonPresses = 0;
   }
 
   // reset the buttonPresses and count at some hour of the day
@@ -266,7 +280,7 @@ void loop() {
   }
 
   // reallow reset to occur after reset time has passed
-  if (second() == 1) {
+  if (second() != 0) {
     resetFlag = false;
   }
 }
