@@ -116,7 +116,7 @@ void setup() {
   while(! Serial);
 
   // select IO for push button
-  pinMode(BUTTON_IO, INPUT);
+  pinMode(BUTTON_IO, INPUT_PULLDOWN);
 
   Serial.print("Connecting to Adafruit IO");
 
@@ -240,7 +240,7 @@ void loop() {
   }
   
   // Debounce button presses, so we don't count presses more than once and not flood AdafruitIO more than 30 messages per minute
-  if((((currTime - lastReportTime) >= (DEBOUNCE_SECS * 1000)) || (currTime < (DEBOUNCE_SECS * 1000))) && (currButtonPresses < 25)) {
+  if((((currTime - lastReportTime) >= (DEBOUNCE_SECS * 1000)) || (currTime < (DEBOUNCE_SECS * 1000))) && (currButtonPresses <= 20)) {
     // make debounce for button reads and reports
     buttonRead = digitalRead(BUTTON_IO);
     if (buttonRead) {
