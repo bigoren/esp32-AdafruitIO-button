@@ -42,7 +42,7 @@ time_t secTime = 0;
 // char *isoTime;
 
 // this int will hold the current count for our sketch
-int count = 0;
+// int count = 0;
 
 // set up the 'counter' feed
 // AdafruitIO_Feed *counter = io.feed("counter");
@@ -222,10 +222,10 @@ void loop() {
   
   if (currTime - lastMonitorTime >= (MONITOR_SECS * 1000)) {
     // save count to the 'counter' feed on Adafruit IO
-    Serial.print("sending rssi value -> ");
     // Serial.println(count);
     // counter->save(count);
     // save the wifi signal strength (RSSI) to the 'rssi' feed on Adafruit IO
+    Serial.print("sending rssi value -> ");
     rssi->save(WiFi.RSSI());
     
     Serial.print("Time is: ");
@@ -235,7 +235,7 @@ void loop() {
     Serial.println(buttonPresses);
 
     // increment the count by 1
-    count++;
+    // count++;
     lastMonitorTime = currTime;
   }
   
@@ -251,7 +251,7 @@ void loop() {
       }
       Serial.print("sending button pressed! # is now -> ");
       Serial.println(buttonPresses);
-      Serial.print("curren button presses is -> ");
+      Serial.print("current button presses is -> ");
       Serial.println(currButtonPresses);
       digitalClockDisplay();
       reportButton->save(buttonPresses);
@@ -267,14 +267,22 @@ void loop() {
     currButtonPresses = 0;
   }
 
-  // reset the buttonPresses and count at some hour of the day
+  // reset the buttonPresses at some hour of the day
   if ((hour() == RESET_HOUR) && (minute() == 0) && (second() == 0) && (!resetFlag)) {
     Serial.print("resetting button presses reset at time -> ");
     digitalClockDisplay();
     buttonPresses = 0;
     reportButton->save(buttonPresses);
-    count = 0;
-    // counter->save(count);
+    // remember a reset happened so we don't do it again and bombard Adafruit IO with requests
+    resetFlag = true;
+  }
+
+  // set buttonPresses to leds off state at some hour of the day
+  if ((hour() == OFF_HOUR) && (minute() == 0) && (second() == 0) && (!resetFlag)) {
+    Serial.print("setting button presses to OFF state at time -> ");
+    digitalClockDisplay();
+    buttonPresses = 10;
+    reportButton->save(buttonPresses);
     // remember a reset happened so we don't do it again and bombard Adafruit IO with requests
     resetFlag = true;
   }

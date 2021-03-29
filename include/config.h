@@ -52,6 +52,7 @@ AdafruitIO_WiFi io(IO_USERNAME, IO_KEY, WIFI_SSID, WIFI_PASS);
 
 // Time related configurations
 #define TZ_HOUR_SHIFT   3  // number of hours to shift due to Time Zone
-#define RESET_HOUR      9 // hour of day (0-23) to reset the button presses count
-#define DEBOUNCE_SECS   1 // minimum number of seconds between presses
+#define RESET_HOUR      16 // hour of day (0-23) to reset the button presses count
+#define OFF_HOUR        23 // hour of day (0-23) to reset the button presses count
+#define DEBOUNCE_SECS   0.5 // minimum number of seconds between presses
 #define MONITOR_SECS    30 // interval between monitoring messages, watch out for Adafruit IO rate limit 30 topics per minute
