@@ -30,6 +30,9 @@ unsigned int lastMonitorTime = 0;
 unsigned int lastReportTime = 0;
 unsigned int firstReportTime = 0;
 
+String iconRocket = "rocket";
+String iconPlane  = "fighter-jet";
+
 // set up the 'time/seconds' topic
 AdafruitIO_Time *seconds = io.time(AIO_TIME_SECONDS);
 time_t secTime = 0;
@@ -48,6 +51,7 @@ time_t secTime = 0;
 // AdafruitIO_Feed *counter = io.feed("counter");
 AdafruitIO_Feed *rssi = io.feed("rssi");
 AdafruitIO_Feed *reportButton = io.feed("button");
+AdafruitIO_Feed *iconButton = io.feed("button_icon");
 
 
 // message handler for the seconds feed
@@ -74,6 +78,7 @@ void setButton(AdafruitIO_Data *data) {
   Serial.print("received new button value <- ");
   Serial.println(data->value());
   buttonPresses = atoi(data->value());
+  iconButton->save(iconPlane);
 }
 
 void printDigits(int digits){
@@ -240,21 +245,22 @@ void loop() {
   }
   
   // Debounce button presses, so we don't count presses more than once and not flood AdafruitIO more than 30 messages per minute
-  if((((currTime - lastReportTime) >= (DEBOUNCE_SECS * 1000)) || (currTime < (DEBOUNCE_SECS * 1000))) && (currButtonPresses <= 20)) {
+  if((((currTime - lastReportTime) >= (DEBOUNCE_SECS * 1000)) || (currTime < (DEBOUNCE_SECS * 1000))) && (currButtonPresses < 10)) {
     // make debounce for button reads and reports
     buttonRead = digitalRead(BUTTON_IO);
     if (buttonRead) {
       currButtonPresses++;
       buttonPresses++;
-      if (buttonPresses > 10) {
-        buttonPresses = 0;
-      }
+      // if (buttonPresses > 10) {
+      //   buttonPresses = 0;
+      // }
       Serial.print("sending button pressed! # is now -> ");
       Serial.println(buttonPresses);
       Serial.print("current button presses is -> ");
       Serial.println(currButtonPresses);
       digitalClockDisplay();
       reportButton->save(buttonPresses);
+      iconButton->save(iconRocket);
       lastReportTime = currTime;
       if (currButtonPresses == 0) {
         firstReportTime = currTime;
@@ -278,16 +284,16 @@ void loop() {
   }
 
   // set buttonPresses to leds off state at some hour of the day
-  if ((hour() == OFF_HOUR) && (minute() == 0) && (second() == 0) && (!resetFlag)) {
-    Serial.print("setting button presses to OFF state at time -> ");
-    digitalClockDisplay();
-    buttonPresses = 10;
-    reportButton->save(buttonPresses);
-    // remember a reset happened so we don't do it again and bombard Adafruit IO with requests
-    resetFlag = true;
-  }
+  // if ((hour() == OFF_HOUR) && (minute() == 0) && (second() == 0) && (!resetFlag)) {
+  //   Serial.print("setting button presses to OFF state at time -> ");
+  //   digitalClockDisplay();
+  //   buttonPresses = 10;
+  //   reportButton->save(buttonPresses);
+  //   // remember a reset happened so we don't do it again and bombard Adafruit IO with requests
+  //   resetFlag = true;
+  // }
 
-  // reallow reset to occur after reset time has passed
+  // re-allow reset to occur after reset time has passed
   if (second() != 0) {
     resetFlag = false;
   }

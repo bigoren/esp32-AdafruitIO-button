@@ -55,4 +55,4 @@ AdafruitIO_WiFi io(IO_USERNAME, IO_KEY, WIFI_SSID, WIFI_PASS);
 #define RESET_HOUR      16 // hour of day (0-23) to reset the button presses count
 #define OFF_HOUR        23 // hour of day (0-23) to reset the button presses count
 #define DEBOUNCE_SECS   0.5 // minimum number of seconds between presses
-#define MONITOR_SECS    30 // interval between monitoring messages, watch out for Adafruit IO rate limit 30 topics per minute
+#define MONITOR_SECS    30 // interval between monitoring messages, watch out for Adafruit IO rate limit 30 messages per minute
